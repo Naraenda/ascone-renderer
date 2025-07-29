@@ -1,0 +1,9 @@
+# Python
+__pycache__
+
+# Project
+_dist
+_content
+
+# Development
+.vscode

@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"liveServer.settings.root": "/_dist",
+		"emeraldwalk.runonsave": {
+			"showElapsed": true,
+			"commands": [
+				{
+					"match": "_(content|static|template|styles).*",
+					"cmd": "py .\\ascone-build\\"
+				}
+			]
+		},
+	}
+}

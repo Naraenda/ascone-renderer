@@ -1,0 +1,174 @@
+{% macro nav_tree(tree) %}
+<ul>
+    {%- for file_name, data in tree.items() | sort %}
+    <li>
+        {%- if data[1].title -%}
+        <a href="{{ data[1].url }}">{{ data[1].title }}</a>
+        {%- else -%}
+        <a>{{ file_name }}</a>
+        {%- endif -%}
+        {%- if data[0] -%}
+        {{- nav_tree(data[0]) -}}
+        {%- endif -%}
+    </li>
+    {%- endfor %}
+</ul>
+{%- endmacro %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{ meta.title }}</title>
+    <link rel="preload" href="/static/style.css" as="style" />
+    <link rel="preload" href="/static/fonts/fairfax.ttf" as="font" />
+
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+    <div class="splash">
+    <a href="/index.html">
+    <pre>{% include "splash.txt" %}</pre>
+    </a>
+    </div>
+    <div class="page">
+        <div class="navbar">
+            <div class="header no-frame">
+                <canvas width="72" height="72" id="doohickey"></canvas>
+                <script type="importmap">
+                {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
+                }
+                }
+                </script>
+                <script type="module">
+                    import * as THREE from 'three';
+                    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+                    const seed = Math.random()
+
+                    window.addEventListener('load', () => {
+                        const canvas = document.getElementById('doohickey');
+                        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: true });
+                        const camera = new THREE.OrthographicCamera(-1, 1, -1, 1, 0.1, 10);
+                        const scene = new THREE.Scene();
+
+                        const wire = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.2, wireframe: true, transparent: true });
+
+                        const loader = new FBXLoader();
+                        var is_loaded = false;
+                        var fbx = null;
+                        loader.load('/static/paletta_256/paletta_256.fbx', (fbx_) => {
+                            fbx = fbx_;
+                            fbx.traverse((element) => {
+                                if (element.isMesh) {
+                                    element.material = wire;
+                                }
+                            });
+                            fbx.position.z = -3;
+                            fbx.position.y = 0.8;
+                            fbx.rotation.z = Math.PI;
+                            fbx.scale.set(0.5, 0.5, 0.5)
+
+                            is_loaded = true;
+                            console.log("loaded model");
+                        });
+
+                        var model = null;
+                        function draw(time) {
+                            renderer.clear();
+                            if (is_loaded) {
+                                if (!model) {
+                                    model = fbx;
+                                    model.position.z = -3;
+                                    scene.add(model);
+                                }
+
+                                model.rotation.y = time * 0.001;
+                                model.rotation.x = Math.sin(time * 0.001 + seed) * 0.4;
+                            }
+                            renderer.render(scene, camera);
+                            requestAnimationFrame(draw);
+                        }
+                        draw(0);
+                    });
+                </script>
+            </div>
+            <div class="content">
+                <nav class="navbar">
+                    <h2>tree</h2>
+                    <p></p>
+                    <a href="/index.html">index</a>
+                    {{ nav_tree(nav) }}
+                </nav>
+            </div>
+            {# <div class="footer"></div> #}
+        </div>
+        <main class="main">
+            <hgroup class="header">
+                <header>
+                    <h1>{{ meta.title }}.md</h1>
+                </header>
+                <p></p>
+                {%- for part in bread_crumbs %}{{ part }}{% if loop.last %}.md{% else %}/{% endif %}{% endfor -%}<br/>
+                <ul>
+                    <li>date: {{ meta.date }}</li>
+                    <li>tags: {{ meta.tags }}</li>
+                    <li>meow: yes</li>
+                </ul>
+            </hgroup>
+            <article class="content">
+                {{ content }}
+                {% if child_pages -%}
+                <section>
+                    <h1>Related pages</h1>
+
+                    <p>This index contains the following pages.
+                        <ul>
+                            {%- for file_name, data in child_pages.items() | sort %}
+                            <li>
+                                {%- if data[1].title -%}
+                                <a href="{{ data[1].url }}">{{ data[1].title }}</a>
+                                {%- else -%}
+                                <a>{{ file_name }}</a>
+                                {%- endif -%}
+                            </li>
+                            {%- endfor %}
+                        </ul>
+                    </p>
+                </section>
+                {%- endif %}
+            </article>
+            <footer class="footer">
+                Written by ya gurl nara :3
+            </footer>
+        </main>
+    </div>
+    <canvas width="12" height="12" id="loading-canvas" style="position:fixed;top:0;margin:0;padding:0;width:100vw;height:100vh;image-rendering:pixelated;overflow:hidden;z-index:100;"></canvas>
+    <script>
+        (() => {
+            const size = 12;
+            const canvas = document.getElementById('loading-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#1f232e';
+            ctx.fillRect(0, 0, 16, 16);
+            var i = 0;
+            function draw() {
+                ctx.clearRect(Math.floor(i % size), Math.floor(i / size), 1, 1);
+                i += 1;
+                if (i > size * size) {
+                    canvas.remove();
+                } else {
+                    requestAnimationFrame(draw);
+                }
+            }
+            draw();
+
+        })();
+    </script>
+</body>
+
+</html>

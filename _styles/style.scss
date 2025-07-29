@@ -1,0 +1,234 @@
+@use "sass:math";
+
+// [b]ack[g]round
+$col-bg-0: #000000;
+$col-bg-1: #1f232e;
+// [f]ore[g]round
+$col-fg-2: #5f737b;
+$col-fg-1: #a2b3b2;
+$col-fg-0: #e8e3e3;
+// [ac]cent
+$col-ac-0: #431837;
+$col-ac-1: #a53551;
+$col-ac-2: #e18f89;
+
+@font-face {
+    font-family: 'fairfax';
+    src: url('/static/fonts/fairfax.ttf');
+}
+
+:root {
+    // font-family: 'Courier New', Courier, monospace;
+    font-family: 'fairfax';
+    background-color: $col-bg-1;
+    margin: 0;
+    padding: 0;
+    line-height: 1em;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+@keyframes fade-in {
+    from { opacity: 0 }
+      to { opacity: 1 }
+}
+
+a {
+    color: inherit;
+}
+
+@import 'text.scss';
+
+table {
+    border-collapse: collapse;
+    margin: 0.5em 0.5ch 0.5em 0.5ch;
+
+    th, td {
+        padding: 0.5em 0.5ch 0.5em 0.5ch;
+        border: 1px solid;
+    }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    text-align: center;
+    line-height: 2em;
+    margin: -1em 0ch -1em 0ch;
+
+    &::before, &::after {
+        position: absolute;
+        top: 51%;
+        overflow: hidden;
+        width: 49%;
+        height: 1px;
+        content: '\a0';
+        background-color: $col-bg-0;
+    }
+
+    &::before {
+        margin-left: -50%;
+    }
+}
+
+p {
+    margin: 1em 0ch;
+}
+
+blockquote {
+    border-left: 1ch solid $col-ac-1;
+    padding-left: 1ch;
+    margin-left: 0;
+}
+
+pre:has(code) {
+    font-family: inherit;
+    background-color: #eee;
+}
+
+code {
+    font-family: inherit;
+    background-color: #eee;
+}
+
+ul {
+    list-style: none;
+    margin: 0 0 0 0ch;
+    padding: 0 0 0 0.4ch;
+
+    li {
+        box-sizing: border-box;
+        margin: 0 0 0 0ch;
+        padding: 0 0 0 0.5ch;
+        border-left: 1px solid rgb(100, 100, 100);
+        white-space: normal;
+    }
+    li:last-child {
+        border-left: none;
+    }
+    li:before {
+        position: relative;
+        top: -0.25em;
+        height: 0.75em;
+        width: 0.4ch;
+        border-bottom: 1px solid rgb(100, 100, 100);
+        content: "";
+        display: inline-block;
+        left: -0.5ch;
+        margin: 0 -0.4ch 0 0;
+    }
+    li:last-child:before {
+        border-left: 1px solid rgb(100, 100, 100);
+    }
+    li:first-child:before {
+        top: -0.25em;
+        height: 0.4em;
+    }
+}
+
+@mixin char-border($color: black) {
+    border-style: solid;
+    border-color: $color;
+    border-width: 1em 1ch 1em 1ch;
+}
+
+@mixin char-shadow($shadow: black, $distance: 1) {
+    box-shadow: 1ch 1em $shadow; 
+}
+
+@mixin char-padding() {
+    padding: 1em 1ch 1em 1ch;
+}
+
+//
+// Structuring
+//
+
+$structure-article-header-height: 12em;
+$structure-footer-height: 8em;
+$structure-horizontal-space: 4ch;
+$structure-navbar-width: 24ch;
+$structure-main-width: 80ch;
+
+.splash {
+    margin-inline: auto;
+    width: $structure-navbar-width + $structure-horizontal-space + $structure-main-width;
+    pre {
+        color: $col-fg-0;
+        margin: 0;
+        margin-inline: auto;
+        width: min-content;
+        float: right;
+    }
+}
+
+.page {
+    
+    width: 100%;
+    display: grid;
+    grid-template-columns: 
+        1fr 
+        [left] $structure-navbar-width $structure-horizontal-space 
+        [main] $structure-main-width 
+        [right] 0
+        1fr;
+    margin-inline: auto;
+    margin: 0;
+
+    & > .navbar,
+    & > .main {
+        display: grid;
+        grid-template-rows: 
+            [header] $structure-article-header-height 0em 
+            [content] minmax(10em, auto) 0em 
+            [footer] $structure-footer-height;
+
+        & > .header > canvas {
+            width: $structure-navbar-width;
+            height: $structure-article-header-height - 2em;
+            @include char-padding();
+            margin: 0ch 0 6ch 0;
+            box-sizing: border-box;
+            object-fit: contain;
+            image-rendering: pixelated;
+
+        }
+
+        & > .header:not(.no-frame),
+        & > .content > *,
+        & > .footer
+        {
+            background-color: $col-fg-0;
+            @include char-border($col-ac-1);
+            @include char-shadow($col-bg-0);
+            @include char-padding();
+            
+            margin: 0ch 0 6ch 0;
+        }
+
+        & > .header {
+            grid-row-start: header;
+        }
+
+        & > .content {
+            grid-row: content / span 1;
+        }
+        & > .footer {
+            grid-row: footer / span 1;
+        }
+    }
+
+    .navbar {
+        grid-column: left / span 1;
+    }
+
+    .main {
+        grid-column: main / span 1;
+    }
+}
+
+@import 'effects.scss';

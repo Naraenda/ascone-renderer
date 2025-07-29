@@ -1,0 +1,74 @@
+@keyframes rainbow-animate {
+    0% {
+        color: #cb94ff;
+    }
+    20% {
+        color: #028ba1;
+    }
+    40% {
+        color: #4dc725;
+    }
+    60% {
+        color: #ff941a;
+    }
+    80% {
+        color: #d21b1b;
+    }
+    100% {
+        color: #cb94ff;;
+    }
+}
+
+@keyframes shake-animate {
+    0% {
+        transform: translateY(1px);
+    }
+
+    100% {
+        transform: translateY(-1px);
+    }
+}
+
+@keyframes spin-animate {
+    0% {
+        transform: rotateY(0deg);
+    }
+
+    100% {
+        transform: rotateY(-360deg);
+    }
+}
+
+.effect-rainbow .char,
+.effect-shake .char,
+.effect-wave .char,
+.effect-spin .char {
+    display: table-cell;
+    white-space: pre;
+    animation-composition: accumulate;
+}
+
+@mixin effect($name, $animation) {
+    .effect-#{$name} .char {
+        animation: #{$animation};
+    }
+
+    .effect-rainbow .effect-#{$name} .char,
+    .effect-#{$name} .effect-rainbow .char {
+        animation: rainbow-animate 1.0s linear infinite, #{$animation};
+    }
+}
+
+.effect-rainbow .char {
+    animation: rainbow-animate 1.0s linear infinite;
+}
+
+@include effect('shake', 'shake-animate 0.075s linear infinite alternate');
+@include effect('wave', 'shake-animate 0.30s ease-in-out infinite alternate');
+@include effect('spin', 'spin-animate 2.00s ease-in-out infinite');
+
+@for $i from 0 through 20 {
+    .char:nth-child(10n + #{$i}) {
+        animation-delay: #{$i * 100ms - 2000ms} !important;
+    }
+}
