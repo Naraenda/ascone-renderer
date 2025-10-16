@@ -143,7 +143,7 @@ def cli():
 
     # Initialize a markdown transpiler.
     logger.info('Initializing \'mistune\'...')
-    renderer = mistune.HTMLRenderer()
+    renderer = mistune.HTMLRenderer(escape=False)
     transpile = mistune.Markdown(
         renderer=renderer,
         plugins=[
