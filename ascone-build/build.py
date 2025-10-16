@@ -21,7 +21,8 @@ import mistune.plugins.table
 import mistune.plugins.task_lists
 import mistune.plugins.math
 
-from rules import InlineDecorator
+import mistune_ext.custom_inline
+import mistune_ext.wikilink
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +30,10 @@ def apply_custom_rules(md: mistune.Markdown):
     """
     Apply our custom rulez to Mistune!
     """
-    InlineDecorator("effect-rainbow", r"//").register(md)
-    InlineDecorator("effect-shake", r"##").register(md)
-    InlineDecorator("effect-wave", r"((", r"))").register(md)
-    InlineDecorator("effect-spin", r"@@").register(md)
+    mistune_ext.custom_inline.InlineDecorator("effect-rainbow", r"//").register(md)
+    mistune_ext.custom_inline.InlineDecorator("effect-shake", r"##").register(md)
+    mistune_ext.custom_inline.InlineDecorator("effect-wave", r"((", r"))").register(md)
+    mistune_ext.custom_inline.InlineDecorator("effect-spin", r"@@").register(md)
 
 def glob_files(directory: pathlib.Path):
     """
@@ -153,6 +154,7 @@ def cli():
             mistune.plugins.table.table,
             mistune.plugins.task_lists.task_lists,
             mistune.plugins.math.math,
+            mistune_ext.wikilink.plugin,
             apply_custom_rules,
         ]
     )
