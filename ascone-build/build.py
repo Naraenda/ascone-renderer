@@ -55,7 +55,7 @@ def glob_files(directory: pathlib.Path):
             # list, but keep markdown files separate.
             if fnmatch.fnmatch(filename, '*.md'):
                 md_files.append(root.joinpath(filename))
-            else:
+            elif filename.split('.')[-1] in ['txt', 'png', 'jpg', 'jpeg', 'gif']:
                 other_files.append(root.joinpath(filename))
 
     # Return the list of matching file paths.
