@@ -1,7 +1,7 @@
 {% macro nav_tree(tree, trace, parent_in_trace = true) %}
 <ul>
     {%- for file_name, data in tree.items() | sort %}
-    {%- set is_in_trace = data[1].item == trace[0] and parent_in_trace-%}
+    {%- set is_in_trace = data[1].item == trace[0] -%}
     <li>
         {%- if data[1].title -%}
         <a href="{{ data[1].url }}">{{ file_name }}</a>

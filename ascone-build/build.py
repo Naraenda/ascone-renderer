@@ -235,7 +235,7 @@ def cli():
                     new_files[index_path] = frontmatter.Post('')
 
                 node[part] = ({}, {
-                    'item': f'{rel_path.parts[-1]}',
+                    'item': f'{index_path.parts[-2]}',
                     'url': f'/{index_path}.html',
                     'title': part,
                 })
