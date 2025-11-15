@@ -43,7 +43,7 @@ def plugin(
     """Plugin function to add image support to mistune"""
 
     # Use named groups
-    IMAGE_PATTERN = r'!\[(?P<description>[^|\]]+)\]\((?P<url>[^\]]+)\)'
+    IMAGE_PATTERN = r'!\[(?P<description>[^|\]]*)\]\((?P<url>[^\]]+)\)'
     md.inline.register("image", IMAGE_PATTERN, parse_image, before="link")
 
     if md.renderer and md.renderer.NAME == "html":
