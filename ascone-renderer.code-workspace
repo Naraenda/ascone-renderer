@@ -10,7 +10,7 @@
 			"showElapsed": true,
 			"commands": [
 				{
-					"match": "_(content|static|template|styles).*",
+					"match": "(_(content|static|template|styles).*|ascone-build.*)",
 					"cmd": "py .\\ascone-build\\"
 				}
 			]

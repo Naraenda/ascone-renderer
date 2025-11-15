@@ -23,6 +23,7 @@ import mistune.plugins.math
 
 import mistune_ext.custom_inline
 import mistune_ext.wikilink
+import mistune_ext.image
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,8 @@ def glob_files(directory: pathlib.Path):
     Globs all markdown files in a directory.
     """
     # Initialize an empty list to store matching file paths.
-    matches: typing.List[pathlib.Path] = []
+    md_files   : typing.List[pathlib.Path] = []
+    other_files: typing.List[pathlib.Path] = []
 
     # Walk through the directory tree starting from 'directory'.
     for root, _, filenames in os.walk(directory):
@@ -48,12 +50,16 @@ def glob_files(directory: pathlib.Path):
         root = pathlib.Path(root).absolute()
 
         # Filter files matching the pattern '*.md' (i.e., Markdown files).
-        for filename in fnmatch.filter(filenames, '*.md'):
-            # Append the full path of each matching file to the matches list.
-            matches.append(root.joinpath(filename))
+        for filename in filenames:
+            # Append the full path of each matching file to the matches
+            # list, but keep markdown files separate.
+            if fnmatch.fnmatch(filename, '*.md'):
+                md_files.append(root.joinpath(filename))
+            else:
+                other_files.append(root.joinpath(filename))
 
     # Return the list of matching file paths.
-    return matches
+    return (md_files, other_files)
 
 NavTree: typing.TypeAlias = typing.Dict[str, typing.Tuple['NavTree', object]]
 
@@ -155,6 +161,7 @@ def cli():
             mistune.plugins.task_lists.task_lists,
             mistune.plugins.math.math,
             mistune_ext.wikilink.plugin,
+            mistune_ext.image.plugin,
             apply_custom_rules,
         ]
     )
@@ -162,18 +169,18 @@ def cli():
     # Get the Jinja2 environment.
     templates = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
 
-    source_paths = glob_files(source_dir)
-    num_files = len(source_paths)
+    abs_md_paths, abs_asset_paths = glob_files(source_dir)
+    num_md_files = len(abs_md_paths)
 
-    files: dict[pathlib.Path, frontmatter.Post] = {}
-    for i, source_path in enumerate(source_paths):
+    md_files: dict[pathlib.Path, frontmatter.Post] = {}
+    for i, abs_md_path in enumerate(abs_md_paths):
         # Determine the corresponding HTML output path.
-        path = source_path.relative_to(source_dir).with_suffix('')
+        md_path = abs_md_path.relative_to(source_dir).with_suffix('')
 
-        logger.info(f'[{i+1}/{num_files}] Processing: {path}')
+        logger.info(f'[{i+1}/{num_md_files}] Processing: {md_path}')
 
         # Read the markdown content from the input file.
-        with open(source_path, 'r', encoding='utf-8') as file_stream:
+        with open(abs_md_path, 'r', encoding='utf-8') as file_stream:
             file = frontmatter.load(file_stream)
         meta = file.metadata
 
@@ -182,23 +189,30 @@ def cli():
 
         # Ensure a default title.
         if 'title' not in meta:
-            meta['title'] = path.name
+            meta['title'] = md_path.name
 
         # Update the metadata.
         file.metadata = meta
 
         if not is_draft:
-            files[path] = file
+            md_files[md_path] = file
+    
+    # Create a mapping from relative asset paths to absolute asset paths
+    asset_files: dict[pathlib.Path, pathlib.Path] = {}
+    for i, abs_asset_path in enumerate(abs_asset_paths):
+        # Determine the corresponding output path.
+        rel_asset_path = abs_asset_path.relative_to(source_dir)
+        asset_files[rel_asset_path] = abs_asset_path
 
     # Update number of files since we may have skipped a few.
-    num_files = len(files)
+    num_md_files = len(md_files)
 
     # Convert the list of files into a tree-like structure. Which
     # can be used to generate the directory listing recursively.
     logger.info('Building navigation tree')
     nav_tree: NavTree = {}
     new_files: dict[pathlib.Path, frontmatter.Post] = {}
-    for rel_path, file in files.items():
+    for rel_path, file in md_files.items():
         node = nav_tree
         prev_data: tuple[NavTree, object] = ({}, None)
 
@@ -207,7 +221,7 @@ def cli():
             # Add an empty node if it's not in the current node.
             if part not in node:
                 index_path = pathlib.Path(f'{"/".join(rel_path.parts[:i + 1])}/index')
-                if index_path not in files:
+                if index_path not in md_files:
                     logger.info(f'Found dir without index: {index_path}')
                     new_files[index_path] = frontmatter.Post('')
 
@@ -237,11 +251,11 @@ def cli():
             'title': file.metadata['title'],
         })
 
-    files = files | new_files
+    md_files = md_files | new_files
 
     # Process each markdown file found in the source directory.
-    for i, (rel_path, file) in enumerate(files.items()):
-        logger.info(f'[{i+1}/{num_files}] Rendering: {rel_path}')
+    for i, (rel_path, file) in enumerate(md_files.items()):
+        logger.info(f'[{i+1}/{num_md_files}] Rendering: {rel_path}')
         meta = file.metadata
 
         # Find child pages
@@ -287,7 +301,6 @@ def cli():
 
         # Now try to inject that HTML content into a Jinja2 template.
         try:
-            logger.info(f'bread_crumbs: {rel_path.parts}')
             html = template.render({
                 'meta': meta,
                 'bread_crumbs': list(rel_path.parts),
@@ -337,3 +350,14 @@ def cli():
         # And write the HTML out to a file.
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(str(html))
+
+    num_assets = len(asset_files)
+    for i, (rel_asset_path, abs_asset_path) in enumerate(asset_files.items()):
+        logger.info(f'[{i+1}/{num_assets}] Copying: {rel_asset_path}')
+
+        # Use relative path to derive final output path.
+        output_path = output_dir.joinpath(rel_asset_path)
+        
+        # Ensure output directory exists.
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(abs_asset_path, output_path)
