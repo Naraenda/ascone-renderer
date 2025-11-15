@@ -24,8 +24,9 @@ import mistune.plugins.math
 import mistune_ext.custom_inline
 import mistune_ext.wikilink
 import mistune_ext.image
+import mistune_ext.renderer
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('ascone-build')
 
 def apply_custom_rules(md: mistune.Markdown):
     """
@@ -149,7 +150,7 @@ def cli():
 
     # Initialize a markdown transpiler.
     logger.info('Initializing \'mistune\'...')
-    renderer = mistune.HTMLRenderer(escape=False)
+    renderer = mistune_ext.renderer.AsconeHTMLRenderer(escape=False)
     transpile = mistune.Markdown(
         renderer=renderer,
         plugins=[
@@ -160,8 +161,8 @@ def cli():
             mistune.plugins.table.table,
             mistune.plugins.task_lists.task_lists,
             mistune.plugins.math.math,
-            mistune_ext.wikilink.plugin,
             mistune_ext.image.plugin,
+            mistune_ext.wikilink.plugin,
             apply_custom_rules,
         ]
     )
@@ -176,6 +177,9 @@ def cli():
     for i, abs_md_path in enumerate(abs_md_paths):
         # Determine the corresponding HTML output path.
         md_path = abs_md_path.relative_to(source_dir).with_suffix('')
+
+        # Ensure the renderer can find this file
+        renderer.register_relative_target(md_path)
 
         logger.info(f'[{i+1}/{num_md_files}] Processing: {md_path}')
 
@@ -202,6 +206,11 @@ def cli():
     for i, abs_asset_path in enumerate(abs_asset_paths):
         # Determine the corresponding output path.
         rel_asset_path = abs_asset_path.relative_to(source_dir)
+
+        # Ensure the renderer can find this file.
+        renderer.register_relative_target(rel_asset_path)
+
+        # Update mapping for future use.
         asset_files[rel_asset_path] = abs_asset_path
 
     # Update number of files since we may have skipped a few.
@@ -226,7 +235,7 @@ def cli():
                     new_files[index_path] = frontmatter.Post('')
 
                 node[part] = ({}, {
-                    'item': f'{index_path.parts[-2]}',
+                    'item': f'{rel_path.parts[-1]}',
                     'url': f'/{index_path}.html',
                     'title': part,
                 })

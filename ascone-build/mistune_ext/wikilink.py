@@ -25,7 +25,7 @@ def parse_wikilink(
         "children": [{"type": "text", "raw": text}],
         "attrs": {
             "page": page_title,
-            "display": text
+            "display": text,
         }
     })
 

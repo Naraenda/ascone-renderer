@@ -8,34 +8,38 @@ def parse_image(
         m: typing.Match[str],
         state: mistune.core.InlineState
     ) -> int:
-    """Parse image syntax ![description](url)"""
+    """Parse image syntax ![desc](url) ![[url|desc]]"""
 
-    url = m.group('url').strip()
-    description = m.group('description')
+    img_a   = m.group('img_a')
+    img_b   = m.group('img_b')
+    is_wiki = m.group('img_is_wiki')
+
+    url  = img_a if is_wiki else img_b
+    desc = img_b if is_wiki else img_a
 
     # Create a image token
     state.append_token({
         "type": "image",
-        "children": [{"type": "text", "raw": description}] if description else None,
         "attrs": {
             "url": url,
-            "description": description if description else ""
+            "text": desc if desc else url,
         }
     })
 
     return m.end()
 
-def render_wikilink_html(
+def render_image_html(
         renderer: mistune.core.BaseRenderer,
-        children: str,
-        url: str,
-        description: str
+        text: str,
+        **attrs: str,
+        # display: str
     ) -> str:
     """Render image as HTML img tag"""
 
-    # TODO: add image description maybe as child tag? idfk
+    url = attrs['href']
+
     url = url.replace(' ', '_')
-    return f'<img src="/{url}" alt="{description}"></a>'
+    return f'<img src="/{url}" alt=""></a>'
 
 def plugin(
         md: mistune.Markdown
@@ -43,8 +47,8 @@ def plugin(
     """Plugin function to add image support to mistune"""
 
     # Use named groups
-    IMAGE_PATTERN = r'!\[(?P<description>[^|\]]*)\]\((?P<url>[^\]]+)\)'
+    IMAGE_PATTERN = r'!\[(?P<img_is_wiki>\[)?(?P<img_a>(?(img_is_wiki)[^|\]]|[^\]])*)(?(img_is_wiki)(?P<img_has_wiki_desc>\|)?|\]\()(?P<img_b>[^\]]*)(?(img_is_wiki)\]\]|\))'
     md.inline.register("image", IMAGE_PATTERN, parse_image, before="link")
 
-    if md.renderer and md.renderer.NAME == "html":
-        md.renderer.register("image", render_wikilink_html)
+    # if md.renderer and md.renderer.NAME == "html":
+    #     md.renderer.register("image", render_image_html)
