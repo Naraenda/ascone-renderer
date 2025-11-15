@@ -1,14 +1,15 @@
-{% macro nav_tree(tree) %}
+{% macro nav_tree(tree, trace, parent_in_trace = true) %}
 <ul>
     {%- for file_name, data in tree.items() | sort %}
+    {%- set is_in_trace = data[1].item == trace[0] and parent_in_trace-%}
     <li>
         {%- if data[1].title -%}
-        <a href="{{ data[1].url }}">{{ data[1].title }}</a>
+        <a href="{{ data[1].url }}">{{ file_name }}</a>
         {%- else -%}
         <a>{{ file_name }}</a>
         {%- endif -%}
-        {%- if data[0] -%}
-        {{- nav_tree(data[0]) -}}
+        {%- if data[0] and is_in_trace -%}
+        {{- nav_tree(data[0], trace[1:], true) -}}
         {%- endif -%}
     </li>
     {%- endfor %}
@@ -102,7 +103,7 @@
                     <h2>tree</h2>
                     <p></p>
                     <a href="/index.html">index</a>
-                    {{ nav_tree(nav) }}
+                    {{ nav_tree(nav, bread_crumbs) }}
                 </nav>
             </div>
             {# <div class="footer"></div> #}

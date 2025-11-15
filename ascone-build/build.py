@@ -212,8 +212,9 @@ def cli():
                     new_files[index_path] = frontmatter.Post('')
 
                 node[part] = ({}, {
+                    'item': f'{index_path.parts[-2]}',
+                    'url': f'/{index_path}.html',
                     'title': part,
-                    'url': f'/{index_path}.html'
                 })
 
             # Keep track of the found (node, meta)-datatuple.
@@ -231,6 +232,7 @@ def cli():
         # metadata. We're replacing prev_data[1], but tuples
         # are passed by value so we have to construct it.
         node[part] = (node[part][0] if part in node else {}, {
+            'item': f'{rel_path.parts[-1]}',
             'url': f'/{rel_path.as_posix()}.html',
             'title': file.metadata['title'],
         })
@@ -285,9 +287,10 @@ def cli():
 
         # Now try to inject that HTML content into a Jinja2 template.
         try:
+            logger.info(f'bread_crumbs: {rel_path.parts}')
             html = template.render({
                 'meta': meta,
-                'bread_crumbs': rel_path.parts,
+                'bread_crumbs': list(rel_path.parts),
                 'child_pages': child_pages,
                 'content': str(html_content),
                 'nav': nav_tree,
