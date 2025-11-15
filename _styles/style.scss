@@ -213,6 +213,10 @@ $structure-main-width: 80ch;
             padding: 0em 1ch 1em 1ch;
             
             margin: 0ch 0 6ch 0;
+
+            img {
+                max-width: $structure-main-width - 4ch;
+            }
         }
 
         & > .header {
