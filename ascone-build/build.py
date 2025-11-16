@@ -21,6 +21,8 @@ import mistune.plugins.table
 import mistune.plugins.task_lists
 import mistune.plugins.math
 
+import mistune.directives
+
 import mistune_ext.custom_inline
 import mistune_ext.wikilink
 import mistune_ext.image
@@ -161,6 +163,9 @@ def cli():
             mistune.plugins.table.table,
             mistune.plugins.task_lists.task_lists,
             mistune.plugins.math.math,
+            mistune.directives.FencedDirective([
+                mistune.directives.Image(),
+            ]),
             mistune_ext.image.plugin,
             mistune_ext.wikilink.plugin,
             apply_custom_rules,

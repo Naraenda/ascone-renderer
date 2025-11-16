@@ -4,6 +4,7 @@ import re
 import typing
 
 import mistune
+import mistune.util
 
 logger = logging.getLogger('ascone-build')
 
@@ -30,12 +31,38 @@ class AsconeHTMLRenderer(mistune.HTMLRenderer):
         return super().link(text, url, title)
 
     def image(self, text: str, url: str, title: typing.Optional[str] = None) -> str:
+
+        keywords = text.split('|')
+
+        TAGS = ['left', 'right', 'center']
+
+        # TODO: process keywords into classes
+        width = None
+        text = ""
+        classes: typing.List[str] = []
+        for keyword in keywords:
+            if keyword.endswith('px'):
+                width = keyword
+            elif keyword in TAGS:
+                classes.append(keyword)
+            else:
+                text += keyword
+
         # If url is relative, then try to get the full path of what
         # it is describing.
         if self.is_relative_target(url):
             url = self.lookup_relative_target(url) or url
 
-        return super().image(text, url, title)
+        s = f'<img src="{self.safe_url(url)}" alt="{mistune.util.escape(mistune.util.striptags(text))}"'
+        if title:
+            s += f' title="{mistune.util.safe_entity(title)}"'
+        if classes and len(classes) > 0:
+            s += f' class="{" ".join(classes)}"'
+        if width:
+            s += f' width="{width}"'
+        s += ' />'
+
+        return s
     
     # Targets contain a lookup map of filename/directories
     targets: TargetTree = {}
