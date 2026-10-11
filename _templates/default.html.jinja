@@ -20,9 +20,11 @@
 <html>
 
 <head>
+    <meta charset="utf-8"> 
     <title>{{ meta.title }}</title>
     <link rel="preload" href="/static/style.css" as="style" />
     <link rel="preload" href="/static/fonts/fairfax.ttf" as="font" />
+    <link rel="preload" href="/static/paletta_256/paletta_256.fbx" as="fetch" />
 
     <link rel="stylesheet" href="/static/style.css" />
 </head>
@@ -49,9 +51,7 @@
                     import * as THREE from 'three';
                     import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
-                    const seed = Math.random()
-
-                    window.addEventListener('load', () => {
+                    (() => {
                         const canvas = document.getElementById('doohickey');
                         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: true });
                         const camera = new THREE.OrthographicCamera(-1, 1, -1, 1, 0.1, 10);
@@ -59,43 +59,48 @@
 
                         const wire = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.2, wireframe: true, transparent: true });
 
-                        const loader = new FBXLoader();
-                        var is_loaded = false;
                         var fbx = null;
-                        loader.load('/static/paletta_256/paletta_256.fbx', (fbx_) => {
-                            fbx = fbx_;
-                            fbx.traverse((element) => {
-                                if (element.isMesh) {
-                                    element.material = wire;
-                                }
-                            });
-                            fbx.position.z = -3;
-                            fbx.position.y = 0.8;
-                            fbx.rotation.z = Math.PI;
-                            fbx.scale.set(0.5, 0.5, 0.5)
-
-                            is_loaded = true;
-                            console.log("loaded model");
-                        });
-
                         var model = null;
-                        function draw(time) {
-                            renderer.clear();
-                            if (is_loaded) {
-                                if (!model) {
-                                    model = fbx;
-                                    model.position.z = -3;
-                                    scene.add(model);
-                                }
 
-                                model.rotation.y = time * 0.001;
-                                model.rotation.x = Math.sin(time * 0.001 + seed) * 0.4;
+                        function draw() {
+                            var time = +new Date();
+                            renderer.clear();
+                            if (!model) {
+                                fbx.traverse((element) => {
+                                    if (element.isMesh) {
+                                        element.material = wire;
+                                    }
+                                });
+    
+                                fbx.position.z = -3;
+                                fbx.position.y = 0.8;
+                                fbx.rotation.z = Math.PI;
+                                fbx.scale.set(0.5, 0.5, 0.5)
+                                model = fbx;
+                                model.position.z = -3;
+                                scene.add(model);
                             }
+
+                            model.rotation.y = time * 0.001;
+                            model.rotation.x = Math.sin(time * 0.001 + 0.5) * 0.4;
                             renderer.render(scene, camera);
                             requestAnimationFrame(draw);
                         }
-                        draw(0);
-                    });
+
+                        var cached = JSON.parse(localStorage.getItem('paletta_256.fbx'));
+                        if (cached) {
+                            fbx = (new THREE.ObjectLoader()).parse(cached);
+                            draw(0);
+                        } else {
+                            const loader = new FBXLoader();
+                            loader.load('/static/paletta_256/paletta_256.fbx', (fbx_) => {
+                                fbx = fbx_;
+                                localStorage.setItem('paletta_256.fbx', JSON.stringify(fbx));
+                                console.log("loaded model");
+                                draw(0);
+                            });
+                        }
+                    })();
                 </script>
             </div>
             <div class="content">
@@ -147,6 +152,7 @@
             </footer>
         </main>
     </div>
+    <!--
     <canvas width="12" height="12" id="loading-canvas" style="position:fixed;top:0;margin:0;padding:0;width:100vw;height:100vh;image-rendering:pixelated;overflow:hidden;z-index:100;"></canvas>
     <script>
         (() => {
@@ -169,6 +175,7 @@
 
         })();
     </script>
+    -->
 </body>
 
 </html>

@@ -7,3 +7,4 @@ _content
 
 # Development
 .vscode
+.direnv
