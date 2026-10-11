@@ -1,5 +1,5 @@
 {
-  description = "Static site renderer for Ascone (Python, Mistune, Jinja2, Sass).";
+  description = "simple site renderer for ascone.eax.rip";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
 
@@ -24,9 +24,8 @@
             python-frontmatter
           ]);
 
-          # Walk up from the current directory to the project root. We use
-          # the live working tree (not the Nix store snapshot) because
-          # _content/ and _dist/ are gitignored and would be missing there.
+          # Working directory could be anything that is not the project root dir.
+          # Go up a directory until we find the python scripts.
           findRoot = ''
             dir=$(pwd)
             while [ "$dir" != "/" ] && [ ! -d "$dir/ascone-build" ]; do
